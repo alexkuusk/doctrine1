@@ -185,7 +185,7 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
      *
      * @var array
      */
-    protected $_invokedSaveHooks = false;
+    protected $_invokedSaveHooks = [];
 
     /**
      * @var integer $index                  this index is used for creating object identifiers
@@ -796,7 +796,7 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
      *
      * @return string
      */
-    public function serialize()
+    public function __serialize()
     {
         $event = new Doctrine_Event($this, Doctrine_Event::RECORD_SERIALIZE);
 
@@ -842,12 +842,15 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
             }
         }
 
-        $str = serialize($vars);
-
         $this->postSerialize($event);
         $this->getTable()->getRecordListener()->postSerialize($event);
 
-        return $str;
+        return $vars;
+    }
+
+    public function serialize()
+    {
+        return serialize($this->__serialize());
     }
 
     /**
@@ -857,7 +860,7 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
      * @throws Doctrine_Record_Exception        if the cleanData operation fails somehow
      * @return void
      */
-    public function unserialize($serialized)
+    public function __unserialize($array)
     {
         $event = new Doctrine_Event($this, Doctrine_Event::RECORD_UNSERIALIZE);
 
@@ -868,8 +871,6 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
 
         $this->preUnserialize($event);
         $this->getTable()->getRecordListener()->preUnserialize($event);
-
-        $array = unserialize($serialized);
 
         foreach($array as $k => $v) {
             $this->$k = $v;
@@ -914,6 +915,11 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
 
         $this->postUnserialize($event);
         $this->getTable()->getRecordListener()->postUnserialize($event);
+    }
+
+    public function unserialize($str)
+    {
+        return $this->__unserialize(unserialize($str));
     }
 
     /**
@@ -1553,8 +1559,8 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
         } else if (in_array($type, array('integer', 'int')) && is_numeric($old) && is_numeric($new)) {
             return $old != $new;
         } else if ($type == 'timestamp' || $type == 'date') {
-            $oldStrToTime = strtotime($old);
-            $newStrToTime = strtotime($new);
+            $oldStrToTime = strtotime($old ?? '');
+            $newStrToTime = strtotime($new ?? '');
             if ($oldStrToTime && $newStrToTime) {
                 return $oldStrToTime !== $newStrToTime;
             } else {
@@ -1878,7 +1884,7 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
      *
      * @return integer          the number of columns in this record
      */
-    public function count()
+    public function count(): int
     {
         return count($this->_data);
     }
@@ -2175,7 +2181,7 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
      * implements IteratorAggregate interface
      * @return Doctrine_Record_Iterator     iterator through data
      */
-    public function getIterator()
+    public function getIterator(): Doctrine_Record_Iterator
     {
         return new Doctrine_Record_Iterator($this);
     }

@@ -1977,7 +1977,7 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable, Seriali
      *
      * @return integer number of records in the table
      */
-    public function count()
+    public function count(): int
     {
         return $this->createQuery()->count();
     }
@@ -2983,12 +2983,12 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable, Seriali
         throw new Doctrine_Table_Exception(sprintf('Unknown method %s::%s', get_class($this), $method));
     }
 
-    public function serialize()
+    public function __serialize()
     {
         $options = $this->_options;
         unset($options['declaringClass']);
 
-        return serialize(array(
+        return [
             $this->_identifier,
             $this->_identifierType,
             $this->_columns,
@@ -3000,13 +3000,16 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable, Seriali
             $options,
             $this->_invokedMethods,
             $this->_useIdentityMap,
-        ));
+        ];
     }
 
-    public function unserialize($data)
+    public function serialize()
     {
-        $all = unserialize($data);
+        return serialize($this->__serialize());
+    }
 
+    public function __unserialize($all)
+    {
         $this->_identifier = $all[0];
         $this->_identifierType = $all[1];
         $this->_columns = $all[2];
@@ -3018,6 +3021,11 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable, Seriali
         $this->_options = $all[8];
         $this->_invokedMethods = $all[9];
         $this->_useIdentityMap = $all[10];
+    }
+
+    public function unserialize($str)
+    {
+        return $this->__unserialize(unserialize($str));
     }
 
     public function initializeFromCache(Doctrine_Connection $conn)

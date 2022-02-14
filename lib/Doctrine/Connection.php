@@ -1178,7 +1178,7 @@ abstract class Doctrine_Connection extends Doctrine_Configurable implements Coun
      *
      * @return ArrayIterator        SPL ArrayIterator object
      */
-    public function getIterator()
+    public function getIterator(): ArrayIterator
     {
         return new ArrayIterator($this->tables);
     }
@@ -1188,7 +1188,7 @@ abstract class Doctrine_Connection extends Doctrine_Configurable implements Coun
      *
      * @return integer
      */
-    public function count()
+    public function count(): int
     {
         return $this->_count;
     }
@@ -1611,12 +1611,17 @@ abstract class Doctrine_Connection extends Doctrine_Configurable implements Coun
      *
      * @return string $serialized
      */
-    public function serialize()
+    public function __serialize()
     {
         $vars = get_object_vars($this);
         $vars['dbh'] = null;
         $vars['isConnected'] = false;
-        return serialize($vars);
+        return $vars;
+    }
+
+    public function serialize()
+    {
+        return serialize($this->__serialize());
     }
 
     /**
@@ -1625,13 +1630,16 @@ abstract class Doctrine_Connection extends Doctrine_Configurable implements Coun
      * @param string $serialized
      * @return void
      */
-    public function unserialize($serialized)
+    public function __unserialize($array)
     {
-        $array = unserialize($serialized);
-
         foreach ($array as $name => $values) {
             $this->$name = $values;
         }
+    }
+
+    public function unserialize($str)
+    {
+        return $this->__unserialize(unserialize($str));
     }
 
     /**

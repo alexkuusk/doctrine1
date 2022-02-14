@@ -97,7 +97,7 @@ class Doctrine_Validator extends Doctrine_Locator_Injectable
         } else if ($type == 'array' || $type == 'object') {
             $length = strlen(serialize($value));
         } else if ($type == 'decimal' || $type == 'float') {
-            $value = abs($value);
+            $value = abs(floatval($value));
 
             $localeInfo = localeconv();
             $decimalPoint = $localeInfo['mon_decimal_point'] ? $localeInfo['mon_decimal_point'] : $localeInfo['decimal_point'];
@@ -111,7 +111,7 @@ class Doctrine_Validator extends Doctrine_Locator_Injectable
         } else if ($type == 'blob') {
             $length = strlen($value);
         } else {
-            $length = self::getStringLength($value);
+            $length = self::getStringLength((string)$value);
         }
         if ($length > $maximumLength) {
             return false;
@@ -125,7 +125,7 @@ class Doctrine_Validator extends Doctrine_Locator_Injectable
      * @param string $string 
      * @return integer $length
      */
-    public static function getStringLength($string)
+    public static function getStringLength(string $string)
     {
         if (function_exists('mb_strlen')) {
             return mb_strlen($string, 'utf8');
